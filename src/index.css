@@ -1,42 +1,87 @@
+
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f8f8f8;
-  text-align: center;
+  font-family: "Arial", sans-serif;
+  background-color: #f4f4f4;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 80vh;
+  height: 100vh;
   margin: 0;
 }
 
-button {
-  background-color: lightgray;
-  border: none;
-  padding: 5px;
-  margin: 3px;
-  cursor: pointer;
-  border-radius: 4px;
+.container {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  width: 490px;
 }
 
-input {
-  background-color: antiquewhite;
+h1 {
+  font-size: 22px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.addButton {
+  background: #4caf50;
+  color: white;
   border: none;
-  padding: 3px;
-  margin: 5px;
-  cursor: text;
-  color: rgb(189, 103, 28);
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 5px;
+
+}
+
+.addButton:hover {
+  background: #45a049;
+}
+
+.phonebook-list {
+  padding: 0;
+  margin-top: 10px;
+}
+
+.entry {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  background: whitesmoke;
+  border: 1px solid gray;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  transition: transform 0.2s ease-in-out;
+}
+
+
+
+input {
+  border: 1px solid gray;
+  padding: 4px;
+  font-size: 14px;
+  width: 140px;
+  text-align: center;
   border-radius: 3px;
 }
 
-div {
-  padding: 10px;
-  border: 1px solid #ddd;
-  width: 300px;
-  border-radius: 7px;
-  height: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: white;
+.deleteButton {
+  background: red;
+  color: white;
+  border: none;
+  padding: 5px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background 0.2s ease-in-out;
+}
 
+.deleteButton:hover {
+  background: orangered;
+}
+
+.latest-info {
+  font-size: 14px;
+  color: gray;
 }

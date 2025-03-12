@@ -77,42 +77,42 @@ const PhoneBookApp: React.FC = () => {
   }
 
   return (
-    <div>
-      <button onClick={addEntry}>Append</button>
-      <h1>Phonebook Entries</h1>
+    <div className="container">
+      <h1>📚 Phonebook</h1>
+      <button onClick={addEntry} className="addButton">
+      ➕ Add Random Entry
+      </button>
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="phonebook">
           {(provided) => (
-            <ul {...provided.droppableProps} ref={provided.innerRef}>
+            <ul {...provided.droppableProps} ref={provided.innerRef} className="phonebook-list">
               {entries.map((entry, index) => (
-                <Draggable key={index} draggableId={index.toString()} index={index}> 
+                <Draggable key={index} draggableId={index.toString()} index={index}>
                   {(provided) => (
                     <li 
                       ref={provided.innerRef} 
                       {...provided.draggableProps} 
-                      {...provided.dragHandleProps}
+                      {...provided.dragHandleProps} 
+                      className="entry"
                     >
                       <input
                         type="text"
                         value={entry.name}
-                        maxLength={30}
                         onChange={(e) => updateEntry(index, "name", e.target.value)}
                       />
-                      |
                       <input
                         type="text"
                         value={entry.email}
-                        maxLength={30}
                         onChange={(e) => updateEntry(index, "email", e.target.value)}
                       />
-                      |
                       <input
                         type="text"
                         value={entry.note}
-                        maxLength={30}
                         onChange={(e) => updateEntry(index, "note", e.target.value)}
                       />
-                      <button onClick={() => deleteEntry(index)}>Delete</button>
+                      <button onClick={() => deleteEntry(index)} className="deleteButton">
+                        ❌
+                      </button>
                     </li>
                   )}
                 </Draggable>
@@ -122,9 +122,10 @@ const PhoneBookApp: React.FC = () => {
           )}
         </Droppable>
       </DragDropContext>
-      <h2>Latest Info: {displayText}</h2>
+      <h2 className="latest-info">Latest Entry: {displayText}</h2>
     </div>
   );
+  
 };
 
 export default PhoneBookApp;

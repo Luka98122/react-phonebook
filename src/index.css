@@ -131,3 +131,18 @@ input {
   background: rgba(0, 0, 0, 0.5);
   z-index: 999;
 }
+
+.sendButton {
+  background: #008cba;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+.sendButton:hover {
+  background: #007bb5;
+}

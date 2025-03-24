@@ -5,6 +5,21 @@ function getRandomInt(max: number) {
   return Math.floor(Math.random() * max);
 }
 
+const sendHelloWorld = async () => {
+  try {
+    const response = await fetch("http://localhost:5121/api/login/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "test", password: "test" }), // Add a dummy payload
+    });
+
+    const data = await response.json();
+    console.log("Response:", data);
+  } catch (error) {
+    console.error("Error sending message:", error);
+  }
+};
+
 class Entry {
   public name: string;
   public email: string;
@@ -44,7 +59,7 @@ class PhoneBook {
 }
 
 const PhoneBookApp: React.FC = () => {
-  const pbRef = useRef(new PhoneBook()); // Persist `PhoneBook` instance
+  const pbRef = useRef(new PhoneBook()); 
   const [entries, setEntries] = useState<Entry[]>(pbRef.current.entries);
   const [displayText, setDisplay] = useState<string>("No info set.");
   const [showInputDiv, setShowInputDiv] = useState<boolean>(false);
@@ -60,7 +75,7 @@ const PhoneBookApp: React.FC = () => {
       pbRef.current.add(newName, newEmail, newNote);
       console.log(`Added - ${pbRef.current.entries.length}`);
 
-      setEntries([...pbRef.current.entries]); // Update state from `pb.entries`
+      setEntries([...pbRef.current.entries]); 
       console.log(`Set - ${entries.length} | ${pbRef.current.entries.length}`);
 
       setDisplay(`${newName} | ${newEmail} | ${newNote}`);
@@ -79,7 +94,7 @@ const PhoneBookApp: React.FC = () => {
   }
 
   function deleteEntry(index: number) {
-    pbRef.current.entries.splice(index, 1); // Also delete from the phonebook instance
+    pbRef.current.entries.splice(index, 1); 
     setEntries([...pbRef.current.entries]);
   }
 
@@ -166,7 +181,9 @@ const PhoneBookApp: React.FC = () => {
           )}
         </Droppable>
       </DragDropContext>
-
+      <button onClick={sendHelloWorld} className="sendButton">
+          📩 Send Hello
+      </button>
       <h2 className="latest-info">Latest Entry: {displayText}</h2>
     </div>
   );

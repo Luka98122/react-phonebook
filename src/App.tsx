@@ -1,22 +1,25 @@
 import React, { useState, useEffect, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
+
+
 function getRandomInt(max: number) {
   return Math.floor(Math.random() * max);
 }
 
-const sendHelloWorld = async () => {
+const handleLogin = async (username : string, password : string) => {
   try {
     const response = await fetch("http://localhost:5121/api/login/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: "test", password: "test" }), // Add a dummy payload
+      body: JSON.stringify({ username, password }),
     });
 
     const data = await response.json();
-    console.log("Response:", data);
+    alert(data.message.includes("Authorized") ? "Login successful!" : "Login failed!");
   } catch (error) {
-    console.error("Error sending message:", error);
+    console.error("Error during login:", error);
+    alert("An error occurred. Please try again.");
   }
 };
 
@@ -67,6 +70,10 @@ const PhoneBookApp: React.FC = () => {
   const [newName, setNewName] = useState<string>("");
   const [newEmail, setNewEmail] = useState<string>("");
   const [newNote, setNewNote] = useState<string>("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+
 
   function addEntry() {
     if (newName && newEmail) {
@@ -107,84 +114,102 @@ const PhoneBookApp: React.FC = () => {
   }
 
   return (
-    <div className="container">
-      <h1>📚 Phonebook</h1>
-      <button onClick={() => setShowInputDiv(true)} className="addButton">
-        ➕ Add Entry
-      </button>
+    <div className="Root">
+       <div className="account-container">
+        <button className="login-button" onClick={() => setShowLoginDialog(true)}>Log in</button>
+      </div>
 
-      {showInputDiv && (
-        <>
-          <div className="overlay" onClick={() => setShowInputDiv(false)}></div>
-          <div className="input-container">
-            <input
-              type="text"
-              placeholder="Name"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Email"
-              value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Note"
-              value={newNote}
-              onChange={(e) => setNewNote(e.target.value)}
-            />
-            <button onClick={addEntry}>Add Entry</button>
-            <button onClick={() => setShowInputDiv(false)}>Cancel</button>
+      {showLoginDialog && (
+        <div className="overlay">
+          <div className="login-container">
+            <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
+            <input type="text" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <button onClick={() => { handleLogin(username, password); setShowLoginDialog(false); }}>Login</button>
+            <button onClick={() => setShowLoginDialog(false)}>Cancel</button>
           </div>
-        </>
+        </div>
       )}
+      
 
-      <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId="phonebook">
-          {(provided) => (
-            <ul {...provided.droppableProps} ref={provided.innerRef} className="phonebook-list">
-              {entries.map((entry, index) => (
-                <Draggable key={index} draggableId={index.toString()} index={index}>
-                  {(provided) => (
-                    <li
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      className="entry"
-                    >
-                      <input
-                        type="text"
-                        value={entry.name}
-                        onChange={(e) => updateEntry(index, "name", e.target.value)}
-                      />
-                      <input
-                        type="text"
-                        value={entry.email}
-                        onChange={(e) => updateEntry(index, "email", e.target.value)}
-                      />
-                      <input
-                        type="text"
-                        value={entry.note}
-                        onChange={(e) => updateEntry(index, "note", e.target.value)}
-                      />
-                      <button onClick={() => deleteEntry(index)} className="deleteButton">
-                        ❌
-                      </button>
-                    </li>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </ul>
-          )}
-        </Droppable>
-      </DragDropContext>
-      <button onClick={sendHelloWorld} className="sendButton">
-          📩 Send Hello
-      </button>
-      <h2 className="latest-info">Latest Entry: {displayText}</h2>
+      <div className="container">
+        <h1>📚 Phonebook</h1>
+        <button onClick={() => setShowInputDiv(true)} className="addButton">
+          ➕ Add Entry
+        </button>
+
+        {showInputDiv && (
+          <>
+            <div className="overlay" onClick={() => setShowInputDiv(false)}></div>
+            <div className="input-container">
+              <input
+                type="text"
+                placeholder="Name"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+              />
+              <input
+                type="text"
+                placeholder="Email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+              />
+              <input
+                type="text"
+                placeholder="Note"
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+              />
+              <button onClick={addEntry}>Add Entry</button>
+              <button onClick={() => setShowInputDiv(false)}>Cancel</button>
+            </div>
+          </>
+        )}
+
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="phonebook">
+            {(provided) => (
+              <ul {...provided.droppableProps} ref={provided.innerRef} className="phonebook-list">
+                {entries.map((entry, index) => (
+                  <Draggable key={index} draggableId={index.toString()} index={index}>
+                    {(provided) => (
+                      <li
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        className="entry"
+                      >
+                        <input
+                          type="text"
+                          value={entry.name}
+                          onChange={(e) => updateEntry(index, "name", e.target.value)}
+                        />
+                        <input
+                          type="text"
+                          value={entry.email}
+                          onChange={(e) => updateEntry(index, "email", e.target.value)}
+                        />
+                        <input
+                          type="text"
+                          value={entry.note}
+                          onChange={(e) => updateEntry(index, "note", e.target.value)}
+                        />
+                        <button onClick={() => deleteEntry(index)} className="deleteButton">
+                          ❌
+                        </button>
+                      </li>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </ul>
+            )}
+          </Droppable>
+        </DragDropContext>
+        <button className="sendButton">
+            📩 Send Hello
+        </button>
+        <h2 className="latest-info">Latest Entry: {displayText}</h2>
+      </div>
     </div>
   );
 };

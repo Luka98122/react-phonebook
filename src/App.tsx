@@ -9,7 +9,7 @@ function getRandomInt(max: number) {
 
 const handleLogin = async (username : string, password : string) => {
   try {
-    const response = await fetch("http://localhost:5121/api/login/", {
+    const response = await fetch("https://brezn.markovic.biz/lapi/login/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
@@ -22,6 +22,23 @@ const handleLogin = async (username : string, password : string) => {
     alert("An error occurred. Please try again.");
   }
 };
+
+const handleRegister = async (username: string, password: string) => {
+  try {
+    const response = await fetch("https://brezn.markovic.biz/lapi/register/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({"user" : username, "password" : password}),
+    });
+
+    const data = await response.json();
+    alert(data.message.includes("Registered") ? "Registration successful!" : "Registration failed!");
+  } catch (error) {
+    console.error("Error during registration:", error);
+    alert("An error occurred. Please try again.");
+  }
+};
+
 
 class Entry {
   public name: string;
@@ -73,6 +90,7 @@ const PhoneBookApp: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [showRegisterDialog, setShowRegisterDialog] = useState(false);
 
 
   function addEntry() {
@@ -117,13 +135,26 @@ const PhoneBookApp: React.FC = () => {
     <div className="Root">
        <div className="account-container">
         <button className="login-button" onClick={() => setShowLoginDialog(true)}>Log in</button>
+        <button className="register-button" onClick={() => setShowRegisterDialog(true)}>Register</button>
+
       </div>
+
+      {showRegisterDialog && (
+        <div className="overlay">
+          <div className="register-container">
+            <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
+            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <button onClick={() => { handleRegister(username, password); setShowRegisterDialog(false); }}>Register</button>
+            <button onClick={() => setShowRegisterDialog(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
 
       {showLoginDialog && (
         <div className="overlay">
           <div className="login-container">
             <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
-            <input type="text" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
             <button onClick={() => { handleLogin(username, password); setShowLoginDialog(false); }}>Login</button>
             <button onClick={() => setShowLoginDialog(false)}>Cancel</button>
           </div>

@@ -1,2 +1,2 @@
 npm run build
-python src/server.py
+python backend/server.py

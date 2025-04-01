@@ -1,10 +1,43 @@
-import React, { useState, useEffect, useRef } from "react";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import React, { useState, useEffect } from "react";
 
+function getCookie(name: string): string | null {
+  const cookies = document.cookie.split("; ");
+  for (const cookie of cookies) {
+      const [cookieName, cookieValue] = cookie.split("=");
+      if (cookieName === name) {
+          return decodeURIComponent(cookieValue);
+      }
+  }
+  return null;
+}
 
+function setCookie(name: string, value: string, seconds: number): void {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + seconds * 1000);
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+}
 
-function getRandomInt(max: number) {
-  return Math.floor(Math.random() * max);
+const getSelfInfo = async(sessid : string) => {
+  try {
+    const response = await fetch("https://brezn.markovic.biz/lapi/getinfo/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({sessid}),
+    });
+
+    const data = await response.json()
+
+    if (response.ok) {
+      return data;  
+    }
+    else{
+      return null;
+    }
+  }
+  catch (error) {
+    console.error("Error during login:", error);
+    alert("An error occurred. Please try again.");
+  }
 }
 
 const handleLogin = async (username : string, password : string) => {
@@ -16,7 +49,12 @@ const handleLogin = async (username : string, password : string) => {
     });
 
     const data = await response.json();
-    alert(data.message.includes("Authorized") ? "Login successful!" : "Login failed!");
+    if (data.message.includes("Authorized")){
+      alert("Login successful!");
+      const end =  Number(data.sessid.split(".")[0]);
+      setCookie("sessid",data.sessid,end-(new Date().getSeconds()));
+      window.location.reload();
+    }
   } catch (error) {
     console.error("Error during login:", error);
     alert("An error occurred. Please try again.");
@@ -39,210 +77,131 @@ const handleRegister = async (username: string, password: string) => {
   }
 };
 
-
-class Entry {
-  public name: string;
-  public email: string;
-  public note: string;
-
-  public constructor(name: string, email: string, note?: string) {
-    this.name = name;
-    this.email = email;
-    this.note = note || "-";
-  }
-}
-
-class PhoneBook {
-  public entries: Entry[] = [];
-  private names = ["Bob", "Sam", "John", "Matt", "Mike"];
-  private domains = ["localhost.com", "real.com", "fake.re"];
-
-  public constructor() {
-    this.entries = [
-      new Entry("John", "john@localhost.com", ":)"),
-      new Entry("Sam", "sam@localhost.com"),
-    ];
+const handleCreatePost = async (title: string, body: string) => {
+  const sessid = getCookie("sessid");
+  if (!sessid) {
+    alert("You must be logged in to create a post.");
+    return;
   }
 
-  public add(name: string, email: string, note: string) {
-    this.entries.push(new Entry(name, email, note));
+  try {
+    const response = await fetch("https://brezn.markovic.biz/lapi/create/post/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessid, title, body }),
+    });
+
+    const data = await response.json();
+    alert(data.Message);
+  } catch (error) {
+    console.error("Error creating post:", error);
+    alert("An error occurred. Please try again.");
   }
+};
 
-  public addRandom() {
-    const ind = getRandomInt(this.names.length);
-    const randomEntry = new Entry(
-      this.names[ind],
-      `${this.names[ind]}@${this.domains[getRandomInt(this.domains.length)]}`
-    );
-    this.entries.push(randomEntry);
-  }
-}
-
-const PhoneBookApp: React.FC = () => {
-  const pbRef = useRef(new PhoneBook()); 
-  const [entries, setEntries] = useState<Entry[]>(pbRef.current.entries);
-  const [displayText, setDisplay] = useState<string>("No info set.");
-  const [showInputDiv, setShowInputDiv] = useState<boolean>(false);
-
-  const [newName, setNewName] = useState<string>("");
-  const [newEmail, setNewEmail] = useState<string>("");
-  const [newNote, setNewNote] = useState<string>("");
+const PostApp: React.FC = () => {
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [showRegisterDialog, setShowRegisterDialog] = useState(false);
-
-
-  function addEntry() {
-    if (newName && newEmail) {
-      console.log(`Will add - ${pbRef.current.entries.length}`);
-
-      pbRef.current.add(newName, newEmail, newNote);
-      console.log(`Added - ${pbRef.current.entries.length}`);
-
-      setEntries([...pbRef.current.entries]); 
-      console.log(`Set - ${entries.length} | ${pbRef.current.entries.length}`);
-
-      setDisplay(`${newName} | ${newEmail} | ${newNote}`);
-      setShowInputDiv(false);
-    }
-  }
+  const [displayInfo, setDisplayInfo] = useState(false);
+  const [userInfo, setUserInfo] = useState<{
+    user: string;
+    id: number;
+    last_modified: number;
+    posts: [number, number, any, string, string, number, number][];
+  }>({
+    user: "",
+    id: 0,
+    last_modified: 0,
+    posts: [],
+  });
+  const sessid = getCookie("sessid");
 
   useEffect(() => {
-    console.log(`Updated state - ${entries.length}`);
-  }, [entries]);
-
-  function updateEntry(index: number, field: keyof Entry, value: string) {
-    const newEntries = [...entries];
-    newEntries[index][field] = value.slice(0, 30);
-    setEntries(newEntries);
-  }
-
-  function deleteEntry(index: number) {
-    pbRef.current.entries.splice(index, 1); 
-    setEntries([...pbRef.current.entries]);
-  }
-
-  function onDragEnd(result: any) {
-    if (!result.destination) return;
-    const newEntries = Array.from(entries);
-    const [movedItem] = newEntries.splice(result.source.index, 1);
-    newEntries.splice(result.destination.index, 0, movedItem);
-    setEntries(newEntries);
-  }
+    const checkSession = async () => {
+      if (sessid) {
+        const user = await getSelfInfo(sessid);
+        if (!user) {
+          alert("Session expired, please log in again.");
+        } else {
+          setDisplayInfo(true);
+          setUserInfo(user);
+        }
+      }
+    };
+    checkSession();
+  }, [sessid]);
 
   return (
     <div className="Root">
-       <div className="account-container">
-        <button className="login-button" onClick={() => setShowLoginDialog(true)}>Log in</button>
-        <button className="register-button" onClick={() => setShowRegisterDialog(true)}>Register</button>
-
+      {displayInfo && userInfo.user ? (
+        <div className="user-info">
+          <h2>Welcome, {userInfo.user}!</h2>
+          <p><strong>User ID:</strong> {userInfo.id}</p>
+          <p><strong>Last Modified:</strong> {userInfo.last_modified}</p>
+          <button onClick={() => {
+            setCookie("sessid", "", -1); 
+            setDisplayInfo(false);
+            
+          }}>Logout</button>
+        </div>
+      ) : (
+        <div className="account-container">
+          <button className="login-button" onClick={() => setShowLoginDialog(true)}>Log in</button>
+          <button className="register-button" onClick={() => setShowRegisterDialog(true)}>Register</button>
+        </div>
+      )}
+      <div className="post-container">
+        <h3>Your Posts</h3>
+          <div className="posts">
+            {userInfo.posts && userInfo.posts.length > 0 ? (
+              userInfo.posts.map((post: any) => (
+                <div key={post[0]} className="post">
+                  <h4>{post[3]}</h4>
+                  <p>{post[4]}</p>
+                  <small>Created at: {new Date(post[5] * 1000).toLocaleString()}</small>
+                  <small>- {post[7]}</small>
+                </div>
+              ))
+            ) : (
+              <p>No posts yet.</p>
+            )}
+        </div>
       </div>
-
-      {showRegisterDialog && (
-        <div className="overlay">
-          <div className="register-container">
-            <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
-            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            <button onClick={() => { handleRegister(username, password); setShowRegisterDialog(false); }}>Register</button>
-            <button onClick={() => setShowRegisterDialog(false)}>Cancel</button>
-          </div>
-        </div>
-      )}
-
-      {showLoginDialog && (
-        <div className="overlay">
-          <div className="login-container">
-            <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
-            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            <button onClick={() => { handleLogin(username, password); setShowLoginDialog(false); }}>Login</button>
-            <button onClick={() => setShowLoginDialog(false)}>Cancel</button>
-          </div>
-        </div>
-      )}
-      
-
-      <div className="container">
-        <h1>📚 Phonebook</h1>
-        <button onClick={() => setShowInputDiv(true)} className="addButton">
-          ➕ Add Entry
-        </button>
-
-        {showInputDiv && (
-          <>
-            <div className="overlay" onClick={() => setShowInputDiv(false)}></div>
-            <div className="input-container">
-              <input
-                type="text"
-                placeholder="Name"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-              />
-              <input
-                type="text"
-                placeholder="Email"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-              />
-              <input
-                type="text"
-                placeholder="Note"
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-              />
-              <button onClick={addEntry}>Add Entry</button>
-              <button onClick={() => setShowInputDiv(false)}>Cancel</button>
+      <div>
+        {showRegisterDialog && (
+          <div className="overlay">
+            <div className="register-container">
+              <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
+              <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <button onClick={() => { handleRegister(username, password); setShowRegisterDialog(false); }}>Register</button>
+              <button onClick={() => setShowRegisterDialog(false)}>Cancel</button>
             </div>
-          </>
+          </div>
         )}
 
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="phonebook">
-            {(provided) => (
-              <ul {...provided.droppableProps} ref={provided.innerRef} className="phonebook-list">
-                {entries.map((entry, index) => (
-                  <Draggable key={index} draggableId={index.toString()} index={index}>
-                    {(provided) => (
-                      <li
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        className="entry"
-                      >
-                        <input
-                          type="text"
-                          value={entry.name}
-                          onChange={(e) => updateEntry(index, "name", e.target.value)}
-                        />
-                        <input
-                          type="text"
-                          value={entry.email}
-                          onChange={(e) => updateEntry(index, "email", e.target.value)}
-                        />
-                        <input
-                          type="text"
-                          value={entry.note}
-                          onChange={(e) => updateEntry(index, "note", e.target.value)}
-                        />
-                        <button onClick={() => deleteEntry(index)} className="deleteButton">
-                          ❌
-                        </button>
-                      </li>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </ul>
-            )}
-          </Droppable>
-        </DragDropContext>
-        <button className="sendButton">
-            📩 Send Hello
-        </button>
-        <h2 className="latest-info">Latest Entry: {displayText}</h2>
+        {showLoginDialog && (
+          <div className="overlay">
+            <div className="register-container">
+              <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
+              <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <button onClick={() => { handleLogin(username, password); setShowLoginDialog(false); }}>Login</button>
+              <button onClick={() => setShowLoginDialog(false)}>Cancel</button>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="container">
+        <h1>Create a Post</h1>
+        <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <textarea placeholder="Body" value={body} onChange={(e) => setBody(e.target.value)} />
+        <button onClick={() => handleCreatePost(title, body)}>Create Post</button>
       </div>
     </div>
   );
 };
 
-export default PhoneBookApp;
+export default PostApp;

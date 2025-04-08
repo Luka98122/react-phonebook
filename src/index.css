@@ -1,176 +1,323 @@
-body {
-  font-family: "Arial", sans-serif;
-  background-color: #f4f4f4;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start; 
-  height: 100vh;
+/* Reset & Base Styles */
+body, html {
   margin: 0;
-  padding: 20px; 
+  padding: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  color: #212529;
 }
 
-.Root {
-  width: 100%;
-  max-width: 1200px; 
-}
-
-.container {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  width: 100%;
-  max-width: 600px; 
-  margin: 0 auto; 
-}
-
-h1 {
-  font-size: 22px;
-  color: #333;
-  margin-bottom: 10px;
-}
-
-input, textarea {
-  width: 100%;
-  padding: 8px;
-  margin: 10px 0;
-  border: 1px solid gray;
-  border-radius: 5px;
-  font-size: 14px;
-}
-
-button {
-  background: #008cba;
-  color: white;
+/* Buttons for login and register triggers */
+.auth-button {
+  padding: 0.5rem 1.2rem;
+  background-color: #007bff;
+  color: #fff;
   border: none;
-  padding: 8px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 5px;
-  transition: background 0.2s ease-in-out;
-}
-
-button:hover {
-  background: #007bb5;
-}
-
-.user-info {
-  background: white;
-  padding: 15px;
   border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-bottom: 15px;
-  text-align: left;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.auth-button:hover {
+  background-color: #0056b3;
+}
+
+
+button, input, textarea {
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* Root Layout */
+.Root {
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* User Info */
+.user-info {
+  background-color: #fff;
+  padding: 1.2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+/* Auth Buttons */
+.account-container {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* Subreddit Search */
+.sub-search-container input {
+  padding: 0.5rem;
   width: 100%;
-  max-width: 400px;
-  margin: 0 auto; 
+  max-width: 300px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
 }
 
-.user-info h2 {
-  font-size: 18px;
-  color: #333;
-  margin-bottom: 10px;
+.search-results {
+  list-style: none;
+  padding: 0;
+  margin-top: 0.5rem;
+  max-width: 300px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.register-button {
-  position: fixed;
-  top: 2%;
-  right: 10%;
-  padding: 6px 9px;
-  background-color: #0db80d;
-  color: #f4f4f4;
-  border-radius: 7px;
+.search-results li {
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.search-results li:hover {
+  background-color: #f1f1f1;
+}
+
+/* Sub Info */
+.sub-info {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 2rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Post */
+.post {
+  background-color: #ffffff;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 10px;
+  border-left: 4px solid #007bff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.post h4 {
+  margin-top: 0;
+}
+
+/* Generic Container */
+.container {
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-top: 2rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+/* Container Inputs & Buttons */
+.container input,
+.container textarea,
+.container select {
+  display: block;
+  width: 100%;
+  margin: 0.5rem 0 1rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.container button {
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
+  color: #fff;
   border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
 
-.login-button {
-  position: fixed;
-  top: 2%;
-  right: 5%;
-  padding: 6px 9px;
-  background-color: #0db80d;
-  color: #f4f4f4;
-  border-radius: 7px;
-  border: none;
+.container button:hover {
+  background-color: #0056b3;
 }
 
-.register-button:hover {
-  background-color: #f4f4f4;
-  color: #0db80d;
+/* Posts from user */
+.post-container {
+  margin-top: 2rem;
 }
 
-.login-button:hover {
-  background-color: #f4f4f4;
-  color: #0db80d;
+.posts {
+  display: flex;
+  flex-direction: column;
 }
 
+/* Modal / Overlay */
 .overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
+  background: rgba(0,0,0,0.4);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 999;
 }
 
+/* Form Container (Register/Login/Create Sub) */
 .register-container {
-  background: aliceblue;
-  padding: 25px;
-  border-radius: 10px;
-  text-align: center;
-  width: 100%;
-  max-width: 250px; 
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.post-container {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  margin-top: 20px;
-  width: 100%;
-  max-width: 800px; 
-  margin: 0 auto; 
+  gap: 1rem;
+  min-width: 320px;
+  max-width: 400px;
 }
 
-.post {
-  border: 1px solid #ccc;
-  padding: 15px;
-  border-radius: 8px;
-  background-color: #f9f9f9;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto; 
-}
-
-.post h4 {
-  margin: 0;
-  font-size: 1.5rem;
+.register-container h3 {
+  margin-top: 0;
+  text-align: center;
   color: #333;
 }
 
-.post p {
-  font-size: 1rem;
-  color: #555;
-  line-height: 1.6;
-  margin-top: 10px;
+.register-container input,
+.register-container textarea {
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  width: 100%;
 }
 
-.post small {
-  display: block;
-  margin-top: 10px;
-  font-size: 0.8rem;
-  color: #777;
+.register-container button {
+  padding: 0.6rem;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
-.post:hover {
-  background-color: #f1f1f1;
-  transform: scale(1.02);
-  transition: background-color 0.3s, transform 0.3s;
+.register-container button:hover {
+  background-color: #0056b3;
+}
+
+/* Specific containers for semantics */
+.login-container,
+.create-subreddit-container,
+.create-post-container {
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin: 2rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Title headers for sections */
+.container h3,
+.register-container h3 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+/* Floating Create Post Button */
+.create-post-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-color: #007bff;
+  color: #fff;
+  font-size: 28px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.2s ease;
+  z-index: 1001;
+}
+
+.create-post-button:hover {
+  background-color: #0056b3;
+}
+
+/* Overlay */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Modal Dialog */
+.create-post-dialog {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  min-width: 320px;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.create-post-dialog h2 {
+  margin-top: 0;
+  text-align: center;
+  color: #333;
+}
+
+.create-post-dialog input,
+.create-post-dialog textarea {
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  width: 100%;
+  font-family: inherit;
+  resize: vertical;
+  font-size: 0.95rem;
+}
+
+.create-post-dialog button {
+  padding: 0.6rem 1.2rem;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.create-post-dialog button:first-of-type {
+  background-color: #007bff;
+  color: white;
+}
+
+.create-post-dialog button:first-of-type:hover {
+  background-color: #0056b3;
+}
+
+.create-post-dialog button:last-of-type {
+  background-color: #6c757d;
+  color: white;
+}
+
+.create-post-dialog button:last-of-type:hover {
+  background-color: #5a6268;
 }

@@ -17,21 +17,131 @@ def createSession():
     sessid = str(int(time.time()+300))+"."+''.join((random.choice(valids) for i in range(5)))
     return sessid
 
-@app.route("/lapi/create/post/",methods=["POST"])
+@app.route("/lapi/search/subs/", methods=["POST"])
+def search_subs():
+    try:
+        query = request.json["query"]
+        cursor.execute("SELECT * FROM subs WHERE name LIKE %s", (f"%{query}%",))
+        subs = cursor.fetchall()
+        conn.commit()
+        return jsonify([{"id": s[0], "name": s[1], "desc": s[2]} for s in subs]), 200
+    except Exception as e:
+        print(e)
+        return jsonify({"message": "Failed to search"}), 500
+
+@app.route("/lapi/get/subinfo/", methods=["POST"])
+def get_subinfo():
+    try:
+        subname = request.json["subname"]
+        cursor.execute("SELECT * FROM subs WHERE name = %s", (subname,))
+        sub = cursor.fetchone()
+        if sub:
+            cursor.execute("SELECT * FROM posts WHERE sub = %s", (sub[0],))
+            posts = cursor.fetchall()
+            return jsonify({
+                "id": sub[0],
+                "name": sub[1],
+                "desc": sub[2],
+                "posts": posts
+            }), 200
+        else:
+            return jsonify({"message": "Sub not found"}), 404
+    except Exception as e:
+        print(e)
+        return jsonify({"message": "Failed"}), 500
+
+
+@app.route("/lapi/create/post/", methods=["POST"])
 def post():
     print(request.json)
     try:
+        sessid = request.json["sessid"]
+        sub = request.json["sub"]
+
+        cursor.execute("SELECT * FROM subs WHERE name = %s",(sub,))
+        sub = cursor.fetchall()[0][0]
+        conn.commit()
+        cursor.execute("SELECT * FROM users WHERE session = %s", (sessid,))
+        found = cursor.fetchall()
+        conn.commit()
+
+        if len(found) > 0:
+            title = request.json["title"]
+            body = request.json["body"]
+            now = int(time.time())
+
+            cursor.execute(
+                "INSERT INTO posts (creator, sub, title, body, created, modified) VALUES (%s, %s, %s, %s, %s, %s)",
+                (found[0][0], sub, title, body, now, now)
+            )
+            conn.commit()
+            return jsonify({"Message": "Post created."}), 200
+        else:
+            return jsonify({"Message": "Invalid sessid."}), 400
+
+    except Exception as e:
+        print(e)
+        return jsonify({"Message": "Error occurred."}), 500
+
+
+@app.route("/lapi/create/sub/",methods=["POST"])
+def sub():
+    print(request.json)
+    try:
+        sessid = request.json["sessid"]
+        cursor.execute("SELECT * FROM users WHERE session = %s", (sessid,))
+        founduser = cursor.fetchall()
+        conn.commit()
+
+        if len(founduser)>0:
+            title = request.json["name"]
+            body = request.json["desc"]
+
+            cursor.execute("SELECT * FROM subs where name = %s", (title,))
+            found = cursor.fetchall()
+
+            if len(found)>0:
+                return jsonify({"Message":"Sub exists."}),200
+            
+            cursor.execute("INSERT INTO subs (name, description) VALUES (%s,%s)",(title,body))
+            conn.commit()
+            cursor.execute("SELECT * FROM subs where name = %s", (title,))
+            res = cursor.fetchall()
+            cursor.execute("INSERT INTO sub_mods (sub_id, user_id) VALUES (%s,%s)",(res[0][0],founduser[0][0]))
+            conn.commit()
+            return jsonify({"Message":"Sub created."}),200
+        else:
+            return jsonify({"Message":"Invalid sessid."}),400
+    except Exception as e:
+        print(e)
+    return jsonify({"Message":"Default exit"}),404
+
+@app.route("/lapi/sub/posts/",methods=["POST"])
+def sub_posts():
+    print(request.json)
+    try:
+        cursor.fetchall()
         sessid = request.json["sessid"]
         cursor.execute("SELECT * FROM users WHERE session = %s", (sessid,))
         found = cursor.fetchall()
         conn.commit()
 
         if len(found)>0:
-            title = request.json["title"]
-            body = request.json["body"]
-            cursor.execute("INSERT INTO posts (creator,title,body,created,modified) VALUES (%s,%s,%s,%s,%s)", (found[0][0],title,body,int(time.time()),int(time.time())))
+            subname = request.json["name"]
+
+            cursor.execute("SELECT * FROM subs where name = %s", (subname,))
+            found = cursor.fetchall()
             conn.commit()
-            return jsonify({"Message":"Post created."}),200
+            if len(found)>0:
+                cursor.execute("Select * from posts where sub = %s",(found[0][0],))
+                found = cursor.fetchall()
+                if len(found)>0:
+                    return jsonify({"Message":"Sub exists.", "posts" : found,"empty":"false"}),200
+                else:
+                    return jsonify({"Message":"Sub exists.", "empty":"true"}),200
+            else:
+                return jsonify({"Message":"Sub not found."}),404
+            
         else:
             return jsonify({"Message":"Invalid sessid."}),400
     except Exception as e:
@@ -49,12 +159,12 @@ def getinfo():
         conn.commit()
 
         if len(found)>0:
-            #cursor.execute("SELECT * FROM posts WHERE creator = %s",(found[0][0],))
-            cursor.execute("""
+            cursor.execute("SELECT * FROM posts WHERE creator = %s",(found[0][0],))
+            ''' cursor.execute("""
                 SELECT p.id, p.creator, p.sub, p.title, p.body, p.created, p.modified, u.user AS username
                 FROM posts p
                 LEFT JOIN users u ON p.creator = u.ID
-            """)
+            """)'''
             posts = cursor.fetchall()
 
             send = {
@@ -71,6 +181,7 @@ def getinfo():
 
     except Exception as e:
         print(e)
+    return jsonify({"Message":"Default exit"}),404
 
 @app.route("/lapi/login/", methods=["POST"])
 def login():
@@ -95,6 +206,7 @@ def login():
                 if int(expires)<int(time.time()):
                     newSession = createSession()
                     cursor.execute("UPDATE users SET session = %s WHERE ID=%s",(newSession,usersFound[0][0]))
+                    conn.commit()
                     cursor.execute("UPDATE users SET date_modified = %s WHERE ID=%s",(int(time.time()),usersFound[0][0]))
                     conn.commit()
                     session = newSession

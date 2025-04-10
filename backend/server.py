@@ -14,7 +14,7 @@ CORS(app)
 
 def createSession():
     valids = 'abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    sessid = str(int(time.time()+300))+"."+''.join((random.choice(valids) for i in range(5)))
+    sessid = str(int(time.time()+3600))+"."+''.join((random.choice(valids) for i in range(5)))
     return sessid
 
 @app.route("/lapi/search/subs/", methods=["POST"])
@@ -28,6 +28,16 @@ def search_subs():
     except Exception as e:
         print(e)
         return jsonify({"message": "Failed to search"}), 500
+
+@app.route("/lapi/users/id-to-name/", methods=["POST"])
+def id_to_name():
+    try:
+        id = request.json["id"]
+        cursor.execute("SELECT * FROM users WHERE id = %s", (id,))
+        return jsonify({"message" : "User found", "name": str(cursor.fetchall()[0][1])}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({"message": "Failed to find requested user."}), 500
 
 @app.route("/lapi/get/subinfo/", methods=["POST"])
 def get_subinfo():
@@ -116,66 +126,119 @@ def sub():
         print(e)
     return jsonify({"Message":"Default exit"}),404
 
-@app.route("/lapi/sub/posts/",methods=["POST"])
+@app.route("/lapi/sub/posts/", methods=["POST"])
 def sub_posts():
     print(request.json)
     try:
         cursor.fetchall()
+
         sessid = request.json["sessid"]
         cursor.execute("SELECT * FROM users WHERE session = %s", (sessid,))
-        found = cursor.fetchall()
+        found_user = cursor.fetchall()
         conn.commit()
 
-        if len(found)>0:
+        if len(found_user) > 0:
             subname = request.json["name"]
-
-            cursor.execute("SELECT * FROM subs where name = %s", (subname,))
-            found = cursor.fetchall()
+            cursor.execute("SELECT * FROM subs WHERE name = %s", (subname,))
+            found_sub = cursor.fetchall()
             conn.commit()
-            if len(found)>0:
-                cursor.execute("Select * from posts where sub = %s",(found[0][0],))
-                found = cursor.fetchall()
-                if len(found)>0:
-                    return jsonify({"Message":"Sub exists.", "posts" : found,"empty":"false"}),200
+
+            if len(found_sub) > 0:
+                sub_id = found_sub[0][0]
+
+                cursor.execute("""
+                    SELECT posts.*, users.user AS username 
+                    FROM posts 
+                    JOIN users ON posts.creator = users.ID 
+                    WHERE posts.sub = %s
+                """, (sub_id,))
+                found_posts = cursor.fetchall()
+
+                desc = cursor.description
+                columns = []
+                for d in desc:
+                    columns.append(d[0])
+
+                post_dicts = []
+                for row in found_posts:
+                    row_dict = {}
+                    for i in range(len(columns)):
+                        row_dict[columns[i]] = row[i]
+                    row_dict["subname"] = subname
+                    post_dicts.append(row_dict)
+
+                if len(post_dicts) > 0:
+                    return jsonify({
+                        "Message": "Sub exists.",
+                        "posts": post_dicts,
+                        "empty": "false"
+                    }), 200
                 else:
-                    return jsonify({"Message":"Sub exists.", "empty":"true"}),200
+                    return jsonify({
+                        "Message": "Sub exists.",
+                        "empty": "true"
+                    }), 200
             else:
-                return jsonify({"Message":"Sub not found."}),404
-            
+                return jsonify({"Message": "Sub not found."}), 404
         else:
-            return jsonify({"Message":"Invalid sessid."}),400
+            return jsonify({"Message": "Invalid sessid."}), 400
     except Exception as e:
         print(e)
-    return jsonify({"Message":"Default exit"}),404
+        return jsonify({
+            "Message": "Server error",
+            "Error": str(e)
+        }), 500
 
-@app.route("/lapi/getinfo/",methods=["POST"])
+
+
+
+@app.route("/lapi/getinfo/", methods=["POST"])
 def getinfo():
     print(request.json)
-
     try:
         sid = request.json["sessid"]
         cursor.execute("SELECT * FROM users WHERE session = %s", (sid,))
         found = cursor.fetchall()
         conn.commit()
+        if len(found) > 0:
+            user_id = found[0][0]
+            username = found[0][1]
+            last_modified = found[0][2]
 
-        if len(found)>0:
-            cursor.execute("SELECT * FROM posts WHERE creator = %s",(found[0][0],))
-            ''' cursor.execute("""
-                SELECT p.id, p.creator, p.sub, p.title, p.body, p.created, p.modified, u.user AS username
-                FROM posts p
-                LEFT JOIN users u ON p.creator = u.ID
-            """)'''
-            posts = cursor.fetchall()
+            cursor.execute("""
+                SELECT posts.*, subs.name AS subname 
+                FROM posts 
+                LEFT JOIN subs ON posts.sub = subs.id 
+                WHERE posts.creator = %s
+            """, (user_id,))
+            post_rows = cursor.fetchall()
 
+            columns = []
+            for d in cursor.description:
+                columns.append(d[0])
+            posts = []
+            for row in post_rows:
+                row_dict = {}
+                for i in range(len(columns)):
+                    row_dict[columns[i]] = row[i]
+                row_dict["username"] = username
+                posts.append(row_dict)
             send = {
-                "id" : found[0][0],
-                "user" : found[0][1],
-                "last_modified" : found[0][2],
-                "posts" : posts
+                "id": user_id,
+                "user": username,
+                "last_modified": last_modified,
+                "posts": posts
             }
             return jsonify(send), 200
         else:
-            return jsonify({"Message":"No such sessid"}),400
+            return jsonify({"Message": "No such sessid"}), 400
+    except Exception as e:
+        print(e)
+        return jsonify({
+            "Message": "Server error",
+            "Error": str(e)
+        }), 500
+
 
 
 

@@ -1,5 +1,6 @@
-// PostApp.tsx
-import React, { useState, useEffect } from "react";
+import React, {useEffect,useState } from "react";
+
+
 
 function getCookie(name: string): string | null {
   const cookies = document.cookie.split("; ");
@@ -174,20 +175,27 @@ const PostApp: React.FC = () => {
 
     const handleSubClick = async (sub: Sub) => {
     setSelectedSub(sub);
-    console.log(sub)
+    console.log(sub,console.trace());
+    if (sessid!=null){
     const resp = await fetch("https://brezn.markovic.biz/lapi/sub/posts/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: sub.name , sessid : sessid}),
     })
     const jso = await resp.json();
-      if (jso.empty !="true"){
-        setPosts(jso.posts)
-        
-      }
-      else{
-        setPosts([{id : -1, title:"Be the first person to post here!", body : "This subreddit is currently empty"}])
-      }
+    if (jso.empty !="true"){
+      setPosts(jso.posts)
+      console.log(jso.posts)
+      
+    }
+    else{
+      setPosts([{id : -1, title:"Be the first person to post here!", body : "This subreddit is currently empty"}])
+    }
+    }
+    else{
+      alert("Session ID has expired, please log in again.");
+    }
+    
       
   };
 
@@ -209,11 +217,10 @@ const PostApp: React.FC = () => {
       }
     };
     checkSession();
-  }, [sessid,selectedSub]);
+  }, [sessid]);
 
   return (
     <div className="Root">
-
       <div className="sub-search-container">
         <input
           type="text"
@@ -261,14 +268,17 @@ const PostApp: React.FC = () => {
             <p>No posts in this sub yet.</p>
           ) : (
             posts.map((post: any) => (
-              <div className="post" key={post.id || post[0]}>
-                <h4>{post.title || post[3]}</h4>
-                <p>{post.body || post[4]}</p>
+              <div className="post" key={post.id}>
+                <h4>{post.title}</h4>
+                <p>{post.body}</p>
+                <small>Posted by: {post.username}</small><br />
+                <small>Posted: {new Date(post.created * 1000).toLocaleString()}</small>
               </div>
             ))
           )}
         </div>
       )}
+
 
       {displayInfo && (
         <>
@@ -314,20 +324,22 @@ const PostApp: React.FC = () => {
 
       {displayInfo && (
         <div className="post-container">
-          <h3>Your Posts</h3>
-          <div className="posts">
-            {userInfo.posts.length > 0 ? (
-              userInfo.posts.map((post: any) => (
-                <div key={post[0]} className="post">
-                  <h4>{post[3]}</h4>
-                  <p>{post[4]}</p>
-                  <small>Created at: {new Date(post[5] * 1000).toLocaleString()}</small>
-                </div>
-              ))
-            ) : (
-              <p>No posts yet.</p>
-            )}
-          </div>
+            <h3>Your Posts</h3>
+            <div className="posts">
+                {userInfo.posts.length > 0 ? (
+                    userInfo.posts.map((post: any) => (
+                        <div key={post.id} className="post">
+                            <h4>{post.title}</h4>
+                            <p>{post.body}</p>
+                            <small>Subreddit: r/{post.subname}</small><br />
+                            <small>Posted: {new Date(post.created * 1000).toLocaleString()}</small><br />
+                            
+                        </div>
+                    ))
+                ) : (
+                    <p>No posts yet.</p>
+                )}
+            </div>
         </div>
       )}
 
